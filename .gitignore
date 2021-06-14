@@ -2,3 +2,7 @@
 node_modules
 /.svelte-kit
 /package
+development.env
+.env.development
+.env
+foo.json
