@@ -9,16 +9,3 @@ datasource db {
 generator client {
   provider = "prisma-client-js"
 }
-
-model Game {
-  box_art_url   String?
-  description   String?
-  id            String  @id
-  last_modified Int
-  platform      String
-  price_range   String?
-  release_date  String?
-  slug          String
-  title         String
-  url           String?
-}

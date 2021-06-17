@@ -6,7 +6,9 @@ export const post = async ({ body }: Request): Promise<EndpointOutput> => {
 	const { skip, take, search } = body as any;
 	const { data, error } = await supabase
 		.from<IGame>('games')
-		.select('id, title, url, box_art_url, price_range, release_date')
+		.select(
+			'id, title, url, box_art_url, price_range, release_date, sale_price, lowest_price, msrp, number_of_players, esrb_rating'
+		)
 		.ilike('title', `%${search}%`)
 		.range(skip, skip + take);
 
