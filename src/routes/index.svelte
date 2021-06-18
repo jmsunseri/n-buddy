@@ -11,6 +11,7 @@
 	import { session } from '$store/session';
 	import type { Session } from '@supabase/gotrue-js';
 	import User from 'tabler-icons-svelte/icons/User.svelte';
+	import { goto } from '$app/navigation';
 
 	let search: string;
 	let skip = 0;
@@ -62,10 +63,10 @@
 	};
 
 	const add = async (gameId: string) => {
-		adding = [...adding, gameId];
-
 		const userId = supabase.auth.session()?.user.id;
 		if (userId) {
+			adding = [...adding, gameId];
+
 			try {
 				const response = await axios({
 					method: 'put',
@@ -86,6 +87,8 @@
 			} finally {
 				adding = adding.filter((a) => a !== gameId);
 			}
+		} else {
+			goto('auth');
 		}
 	};
 
