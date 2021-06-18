@@ -10,7 +10,7 @@
 		: game.release_date || '';
 </script>
 
-<div class="flex flex-row gap-3 p-2 relative">
+<div class="flex flex-col md:flex-row gap-3 p-2 relative">
 	<img src={game.box_art_url} class="h-44 w-44" alt={`Box Art ${game.title}`} />
 	<div class="flex flex-col gap-3 flex-1">
 		<div class="flex flex-col md:flex-row justify-between gap-3">

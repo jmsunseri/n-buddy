@@ -151,7 +151,7 @@
 </script>
 
 <div class="flex flex-col gap-5 h-full">
-	<div class="flex flex-row gap-3 justify-center">
+	<div class="flex flex-col md:flex-row gap-3 justify-center px-3">
 		<TextField placeholder="Super Mario Bros..." bind:value={search} on:keyup={onSearchKeyUp} />
 		<div class="flex flex-col justify-end">
 			<PrimaryButton disabled={loading} on:click={onNewSearch}>Search</PrimaryButton>
