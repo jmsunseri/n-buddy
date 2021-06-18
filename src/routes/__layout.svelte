@@ -44,7 +44,12 @@
 			{#if !isLoggedIn}
 				<LinkButton path="auth">Login</LinkButton>
 			{:else}
-				<Menu isVisible={isAccountMenuVisible}>
+				<Menu
+					isVisible={isAccountMenuVisible}
+					on:click={() => {
+						isAccountMenuVisible = false;
+					}}
+				>
 					<LinkButton on:click={() => (isAccountMenuVisible = !isAccountMenuVisible)} slot="anchor">
 						Account
 						{#if !isAccountMenuVisible}
@@ -53,15 +58,9 @@
 							<CaretUp size={24} />
 						{/if}
 					</LinkButton>
+					<MenuItem path="account">Profile</MenuItem>
 					<MenuItem
 						on:click={() => {
-							isAccountMenuVisible = false;
-						}}
-						path="account">Profile</MenuItem
-					>
-					<MenuItem
-						on:click={() => {
-							isAccountMenuVisible = false;
 							supabase.auth.signOut();
 							goto('/');
 						}}>Sign Out</MenuItem
