@@ -9,6 +9,7 @@
 	import { session } from '$store/session';
 	import Menu from '$comp/Menu.svelte';
 	import MenuItem from '$comp/MenuItem.svelte';
+	import { goto } from '$app/navigation';
 
 	let isLoggedIn = false;
 	let isAccountMenuVisible = false;
@@ -52,8 +53,19 @@
 							<CaretUp size={24} />
 						{/if}
 					</LinkButton>
-					<MenuItem path="account">Profile</MenuItem>
-					<MenuItem on:click={() => supabase.auth.signOut()}>Sign Out</MenuItem>
+					<MenuItem
+						on:click={() => {
+							isAccountMenuVisible = false;
+						}}
+						path="account">Profile</MenuItem
+					>
+					<MenuItem
+						on:click={() => {
+							isAccountMenuVisible = false;
+							supabase.auth.signOut();
+							goto('/');
+						}}>Sign Out</MenuItem
+					>
 				</Menu>
 			{/if}
 		</div>
