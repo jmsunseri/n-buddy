@@ -34,7 +34,7 @@ export const post = async ({ body }: Request): Promise<EndpointOutput> => {
 	const { data, error, status } = await supabase
 		.from<IWatch>('watches')
 		.select(
-			'user_id, game_id, date_added, game:game_id ( id, title, url, box_art_url, price_range, release_date, sale_price, msrp, lowest_price ) '
+			'user_id, game_id, date_added, game:game_id ( id, title, url, box_art_url, price_range, release_date, sale_price, msrp, lowest_price, slug ) '
 		)
 		.match({ user_id: userId })
 		.range(skip, skip + take);
@@ -47,7 +47,7 @@ export const post = async ({ body }: Request): Promise<EndpointOutput> => {
 		return {
 			status: 200,
 			body: JSON.stringify({
-				watches: data,
+				watches: data.slice(0, take),
 				hasMore: data.length > take
 			})
 		};

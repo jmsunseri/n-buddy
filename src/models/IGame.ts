@@ -1,3 +1,8 @@
+import type { IDeveloper } from './IDeveloper';
+import type { IEsrb } from './IEsrb';
+import type { IGenre } from './IGenre';
+import type { IPublisher } from './IPublisher';
+
 export interface IGame {
 	id: string;
 	last_modified: number;
@@ -14,4 +19,8 @@ export interface IGame {
 	lowest_price: number;
 	sale_price?: number;
 	number_of_players: string;
+	genres: { genre: IGenre }[];
+	developers: { developer: IDeveloper }[];
+	publishers: { publisher: IPublisher }[];
+	esrbs: { esrb: IEsrb }[];
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import axios from 'axios';
 	import SecondaryButton from '$comp/SecondaryButton.svelte';
+	import WatchUnWatchButton from '$comp/WatchUnWatchButton.svelte';
 	import TextField from '$comp/TextField.svelte';
 	import PrimaryButton from '$comp/PrimaryButton.svelte';
 	import GameCard from '$comp/GameCard.svelte';
@@ -19,7 +20,6 @@
 	let loading = false;
 	let snackBar: SnackBar;
 	let userId: string;
-	let removing: string[] = [];
 
 	session.subscribe((ses: Session) => (userId = ses ? ses.user.id : undefined));
 
@@ -40,32 +40,6 @@
 				return response;
 			} finally {
 				loading = false;
-			}
-		}
-	};
-
-	const del = async (gameId: string) => {
-		removing = [...removing, gameId];
-		if (userId) {
-			try {
-				const response = await axios({
-					method: 'delete',
-					url: '/api/watch',
-					data: {
-						userId,
-						gameId
-					}
-				});
-				if (response.status === 200) {
-					snackBar.show('Game Removed');
-					watches = watches.filter((w: IWatch) => w.game_id !== gameId);
-				} else {
-					snackBar.show('Error');
-				}
-			} catch {
-				snackBar.show('Error');
-			} finally {
-				removing = removing.filter((a) => a !== gameId);
 			}
 		}
 	};
@@ -115,18 +89,7 @@
 	<div class="flex flex-col gap-3 h-full overflow-y-auto pt-3">
 		{#each watches as watch}
 			<GameCard game={watch.game}>
-				<div>
-					<SecondaryButton>Details</SecondaryButton>
-					<SecondaryButton on:click={() => del(watch.game_id)}>
-						{#if removing.includes(watch.game_id)}
-							<div class="flex flex-row gap-1">
-								Removing... <Spinner />
-							</div>
-						{:else}
-							Un-Watch
-						{/if}
-					</SecondaryButton>
-				</div>
+				<WatchUnWatchButton game={watch.game} {userId} isWatching />
 			</GameCard>
 		{/each}
 		{#if loading}

@@ -1,4 +1,4 @@
-export interface IEsrbDescription {
+export interface IEsrb {
 	id: string;
 	description: string;
 }

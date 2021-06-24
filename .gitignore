@@ -6,3 +6,4 @@ development.env
 .env.development
 .env
 foo.json
+.vercel_build_output

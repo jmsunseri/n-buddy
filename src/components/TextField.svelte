@@ -5,7 +5,7 @@
 </script>
 
 <div
-	class="shadow-inner py-2 px-3 rounded-md border border-gray border-opacity-10 focus-within:ring-nintendo focus-within:ring-4 focus-within:ring-opacity-20 "
+	class="shadow-inner py-2 px-3 rounded-md border border-gray border-opacity-10 focus-within:ring-nintendo focus-within:ring-4 focus-within:ring-opacity-20"
 >
 	<input
 		{placeholder}

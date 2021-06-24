@@ -10,14 +10,21 @@
 	import Menu from '$comp/Menu.svelte';
 	import MenuItem from '$comp/MenuItem.svelte';
 	import { goto } from '$app/navigation';
+	import type { AuthChangeEvent, Session } from '@supabase/gotrue-js';
 
 	let isLoggedIn = false;
 	let isAccountMenuVisible = false;
 
 	onMount(() => {
+		console.log('on mount');
 		const ses = supabase.auth.session();
 		session.set(ses);
 		isLoggedIn = !!ses;
+
+		supabase.auth.onAuthStateChange((event: AuthChangeEvent, s: Session) => {
+			session.set(s);
+			isLoggedIn = !!s;
+		});
 	});
 </script>
 
@@ -39,10 +46,10 @@
 		<div class="flex flex-row items-center">
 			<LinkButton path="/">Search</LinkButton>
 			{#if isLoggedIn}
-				<LinkButton path="watching">Watching</LinkButton>
+				<LinkButton path="/watching">Watching</LinkButton>
 			{/if}
 			{#if !isLoggedIn}
-				<LinkButton path="auth">Login</LinkButton>
+				<LinkButton path="/auth">Login</LinkButton>
 			{:else}
 				<Menu
 					isVisible={isAccountMenuVisible}
@@ -58,7 +65,7 @@
 							<CaretUp size={24} />
 						{/if}
 					</LinkButton>
-					<MenuItem path="account">Profile</MenuItem>
+					<MenuItem path="/account">Profile</MenuItem>
 					<MenuItem
 						on:click={() => {
 							supabase.auth.signOut();

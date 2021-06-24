@@ -6,12 +6,9 @@
 	import PrimaryButton from '$comp/PrimaryButton.svelte';
 	import GameCard from '$comp/GameCard.svelte';
 	import Spinner from '$comp/Spinner.svelte';
-	import { supabase } from '$lib/supabaseClient';
-	import SnackBar from '$comp/SnackBar.svelte';
 	import { session } from '$store/session';
 	import type { Session } from '@supabase/gotrue-js';
-	import User from 'tabler-icons-svelte/icons/User.svelte';
-	import { goto } from '$app/navigation';
+	import WatchUnWatchButton from '$comp/WatchUnWatchButton.svelte';
 
 	let search: string;
 	let skip = 0;
@@ -19,10 +16,7 @@
 	let games: IGame[] = [];
 	let hasMore = false;
 	let loading = false;
-	let snackBar: SnackBar;
 
-	let adding: string[] = [];
-	let removing: string[] = [];
 	let watching: string[] = [];
 
 	let userId: string;
@@ -59,62 +53,6 @@
 			return response;
 		} finally {
 			loading = false;
-		}
-	};
-
-	const add = async (gameId: string) => {
-		const userId = supabase.auth.session()?.user.id;
-		if (userId) {
-			adding = [...adding, gameId];
-
-			try {
-				const response = await axios({
-					method: 'put',
-					url: '/api/watch',
-					data: {
-						userId,
-						gameId
-					}
-				});
-				if (response.status === 200) {
-					snackBar.show('Game Added');
-					watching = [...watching, gameId];
-				} else {
-					snackBar.show('There was an error adding the game');
-				}
-			} catch {
-				snackBar.show('There was an error adding the game');
-			} finally {
-				adding = adding.filter((a) => a !== gameId);
-			}
-		} else {
-			goto('auth');
-		}
-	};
-
-	const deleteWatch = async (gameId: string) => {
-		removing = [...removing, gameId];
-		if (userId) {
-			try {
-				const response = await axios({
-					method: 'delete',
-					url: '/api/watch',
-					data: {
-						userId,
-						gameId
-					}
-				});
-				if (response.status === 200) {
-					snackBar.show('Game Removed');
-					watching = watching.filter((w: string) => w !== gameId);
-				} else {
-					snackBar.show('Error');
-				}
-			} catch {
-				snackBar.show('Error');
-			} finally {
-				removing = removing.filter((a) => a !== gameId);
-			}
 		}
 	};
 
@@ -160,30 +98,7 @@
 	<div class="flex flex-col gap-3 h-full overflow-y-auto pt-3">
 		{#each games as game}
 			<GameCard {game}>
-				{#if !watching.includes(game.id)}
-					<SecondaryButton disabled={adding.includes(game.id)} on:click={() => add(game.id)}>
-						{#if adding.includes(game.id)}
-							<div class="flex flex-row gap-1">
-								Adding... <Spinner />
-							</div>
-						{:else}
-							Watch
-						{/if}
-					</SecondaryButton>
-				{:else}
-					<SecondaryButton
-						disabled={removing.includes(game.id)}
-						on:click={() => deleteWatch(game.id)}
-					>
-						{#if removing.includes(game.id)}
-							<div class="flex flex-row gap-1">
-								Removing... <Spinner />
-							</div>
-						{:else}
-							Un-Watch
-						{/if}
-					</SecondaryButton>
-				{/if}
+				<WatchUnWatchButton {game} {userId} isWatching={watching.includes(game.id)} />
 			</GameCard>
 		{/each}
 		{#if loading}
@@ -196,4 +111,3 @@
 		{/if}
 	</div>
 </div>
-<SnackBar bind:this={snackBar} />

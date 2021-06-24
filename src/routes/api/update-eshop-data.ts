@@ -1,174 +1,101 @@
 import { supabase } from '$lib/supabaseClient';
-import type { IDeveloper } from '$models/IDeveloper';
-import type { IEsrbDescription } from '$models/IEsrbDescription';
-import type { IGame } from '$models/IGame';
-import type { IGenre } from '$models/IGenre';
-import type { IPublisher } from '$models/IPublisher';
+import readline from 'readline';
+import type { IDeveloper, IEsrb, IGame, IGenre, IPublisher, IPrice } from '$models';
 import type { EndpointOutput } from '@sveltejs/kit';
-import { getGamesAmerica } from 'nintendo-switch-eshop';
+import { GameUS, getGamesAmerica } from 'nintendo-switch-eshop';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
 
-export const get = async (): Promise<EndpointOutput> => {
+interface IDescribed {
+	description: string;
+}
+
+interface IGameUpdates {
+	game: IGame;
+	developers: { developer_id: string; game_id: string }[];
+	genres: { genre_id: string; game_id: string }[];
+	publishers: { publisher_id: string; game_id: string }[];
+	esrbs: { esrb_description_id: string; game_id: string }[];
+}
+
+dayjs.extend(duration);
+
+const findNew = (
+	games: GameUS[],
+	existing: IDescribed[],
+	getObjectFromGame: (game: GameUS) => string[]
+): string[] => {
+	return games.reduce((newStuff: string[], g: GameUS) => {
+		return [
+			...newStuff,
+			...getObjectFromGame(g).filter(
+				(s: string) =>
+					!newStuff.includes(s) &&
+					!existing?.find(
+						(described: IDescribed) =>
+							s.toLocaleUpperCase() === described.description.toLocaleUpperCase()
+					)
+			)
+		];
+	}, []);
+};
+
+const addNew = async <T extends IDescribed>(
+	table: string,
+	newItems: string[],
+	existingItems: T[]
+): Promise<T[]> => {
 	try {
-		console.log('starting eshop update');
-
-		const americanGames = await getGamesAmerica();
-		let { data: genres } = await supabase.from<IGenre>('genres').select('id, description');
-		let { data: publishers } = await supabase
-			.from<IPublisher>('publishers')
-			.select('id, description');
-		let { data: developers } = await supabase
-			.from<IDeveloper>('developers')
-			.select('id, description');
-		let { data: esrbDescriptions } = await supabase
-			.from<IEsrbDescription>('esrb_descriptions')
-			.select('id, description');
-
-		console.log('existing reference data fetched');
-
-		// the types description doesn't match what comes back from the API unfortunately
-		const newGenres = americanGames.reduce((newGenres: string[], g: any) => {
-			return [
-				...newGenres,
-				...g.genres.filter(
-					(s: string) =>
-						!newGenres.includes(s) &&
-						!genres?.find(
-							(gen: IGenre) => s.toLocaleUpperCase() === gen.description.toLocaleUpperCase()
-						)
-				)
-			];
-		}, []);
-
-		console.log('new genres', newGenres.length);
-
-		const newPublishers = americanGames.reduce((newPublishers: string[], g: any) => {
-			return [
-				...newPublishers,
-				...g.publishers.filter(
-					(s: string) =>
-						!newPublishers.includes(s) &&
-						!publishers?.find(
-							(pub: IPublisher) => s.toLocaleUpperCase() === pub.description.toLocaleUpperCase()
-						)
-				)
-			];
-		}, []);
-
-		console.log('new publishers', newPublishers.length);
-
-		const newDevelopers = americanGames.reduce((newDevelopers: string[], g: any) => {
-			return [
-				...newDevelopers,
-				...g.developers.filter(
-					(s: string) =>
-						!newDevelopers.includes(s) &&
-						!developers?.find(
-							(dev: IDeveloper) => s.toLocaleUpperCase() === dev.description.toLocaleUpperCase()
-						)
-				)
-			];
-		}, []);
-
-		console.log('new developers', newDevelopers.length);
-
-		const newEsrb = americanGames.reduce((newEsrb: string[], g: any) => {
-			return [
-				...newEsrb,
-				...g.esrbDescriptors.filter(
-					(s: string) =>
-						!newEsrb.includes(s) &&
-						!esrbDescriptions?.find(
-							(esrb: IEsrbDescription) =>
-								s.toLocaleUpperCase() === esrb.description.toLocaleUpperCase()
-						)
-				)
-			];
-		}, []);
-
-		console.log('new esrb', newEsrb.length);
-
-		try {
-			const updates = await supabase
-				.from<IGenre>('genres')
-				.insert(newGenres.map((description: string) => ({ description })));
-
-			if (!updates.error) {
-				genres = [...(genres || []), ...(updates.data || [])];
-				console.log('genres updated');
-			} else {
-				console.log('error updating genres', updates.error);
-			}
-		} catch (error) {
-			console.log('error updating genres', error);
+		const updates = await supabase
+			.from<T>(table)
+			.insert(newItems.map((description: string): T => ({ description } as T)));
+		if (!updates.error) {
+			console.log(`${table} updated ${newItems.length}`);
+			return [...(existingItems || []), ...(updates.data || [])];
+		} else {
+			console.log(`error updating ${table}`, updates.error);
 		}
+	} catch (error) {
+		console.log(`error updating ${table}`, error);
+		return existingItems;
+	}
+};
 
-		try {
-			const updates = await supabase
-				.from<IDeveloper>('developers')
-				.insert(newDevelopers.map((description: string) => ({ description })));
-			if (!updates.error) {
-				developers = [...(developers || []), ...(updates.data || [])];
-				console.log('developers updated');
-			} else {
-				console.log('error updating developers', updates.error);
-			}
-		} catch (error) {
-			console.log('error updating developers', error);
-		}
-
-		try {
-			const updates = await supabase
-				.from<IPublisher>('publishers')
-				.insert(newPublishers.map((description: string) => ({ description })));
-			if (!updates.error) {
-				publishers = [...(publishers || []), ...(updates.data || [])];
-				console.log('publishers updated');
-			} else {
-				console.log('error updating publishers', updates.error);
-			}
-		} catch (error) {
-			console.log('error updating publishers', error);
-		}
-
-		try {
-			const updates = await supabase
-				.from<IEsrbDescription>('esrb_descriptions')
-				.insert(newEsrb.map((description: string) => ({ description })));
-			if (!updates.error) {
-				esrbDescriptions = [...(esrbDescriptions || []), ...(updates.data || [])];
-				console.log('esrb updated');
-			} else {
-				console.log('error updating esrb', updates.error);
-			}
-		} catch (error) {
-			console.log('error updating esrb', error);
-		}
-
-		const games = americanGames
-			.filter((ag: any) => (ag.platform = 'Nintendo Switch' && ag.title && ag.objectID))
-			.map((g: any): {
-				game: IGame;
-				developers: { developer_id: string; game_id: string }[];
-				genres: { genre_id: string; game_id: string }[];
-				publishers: { genre_id: string; game_id: string }[];
-				esrbs: { esrb_description_id: string; game_id: string }[];
-			} => ({
-				developers: g.developers.map((d: string) => ({
-					game_id: g.objectID,
-					developer_id: developers.find((i) => i.description === d)?.id
-				})),
-				genres: [...new Set(g.genres)].map((d: string) => ({
-					game_id: g.objectID,
-					genre_id: genres.find((i) => i.description === d)?.id
-				})),
-				publishers: g.publishers.map((d: string) => ({
-					game_id: g.objectID,
-					publisher_id: publishers.find((i) => i.description === d)?.id
-				})),
-				esrbs: g.esrbDescriptors.map((d: string) => ({
-					game_id: g.objectID,
-					esrb_description_id: esrbDescriptions.find((i) => i.description === d)?.id
-				})),
+const toGameUpdates = (
+	games: GameUS[],
+	developers: IDeveloper[],
+	genres: IGenre[],
+	publishers: IPublisher[],
+	esrbs: IEsrb[]
+): IGameUpdates[] =>
+	games
+		.filter((ag: GameUS) => (ag.platform = 'Nintendo Switch' && ag.title && ag.objectID))
+		.map(
+			(g: GameUS): IGameUpdates => ({
+				developers: g.developers
+					.map((d: string) => ({
+						game_id: g.objectID,
+						developer_id: developers.find((i) => i.description === d)?.id
+					}))
+					.filter((x) => !!x.developer_id),
+				genres: [...new Set(g.genres)]
+					.map((d: string) => ({
+						game_id: g.objectID,
+						genre_id: genres.find((i) => i.description === d)?.id
+					}))
+					.filter((x) => !!x.genre_id),
+				publishers: g.publishers
+					.map((d: string) => ({
+						game_id: g.objectID,
+						publisher_id: publishers.find((i) => i.description === d)?.id
+					}))
+					.filter((x) => !!x.publisher_id),
+				esrbs: g.esrbDescriptors
+					.map((d: string) => ({
+						game_id: g.objectID,
+						esrb_description_id: esrbs.find((i) => i.description === d)?.id
+					}))
+					.filter((x) => !!x.esrb_description_id),
 				game: {
 					box_art_url: g.boxart || null,
 					description: g.description || null,
@@ -186,55 +113,119 @@ export const get = async (): Promise<EndpointOutput> => {
 					number_of_players: g.numOfPlayers || null,
 					sale_price: g.salePrice || null
 				}
-			}));
+			})
+		);
 
+const writeProgressToConsole = (start: number, completed: number, total: number) => {
+	const percentComplete = (completed / total) * 100;
+	const rate = (dayjs().valueOf() - start) / completed;
+	const duration = dayjs.duration(rate * (total - completed));
+	readline.cursorTo(process.stdout, 0);
+	process.stdout.write(
+		`Complete: ${percentComplete.toFixed(1)}%, Est Time Remaining: ${duration.format('mm:ss')}`
+	);
+	if (percentComplete >= 100) {
+		process.stdout.write('\n');
+	}
+};
+
+export const get = async (): Promise<EndpointOutput> => {
+	try {
+		console.log('starting eshop update');
+
+		const americanGames = await getGamesAmerica();
+		let { data: genres } = await supabase.from<IGenre>('genres').select('id, description');
+		let { data: publishers } = await supabase
+			.from<IPublisher>('publishers')
+			.select('id, description');
+		let { data: developers } = await supabase
+			.from<IDeveloper>('developers')
+			.select('id, description');
+		let { data: esrbs } = await supabase.from<IEsrb>('esrb_descriptions').select('id, description');
+
+		console.log('existing reference data fetched');
+
+		const newGenres = findNew(americanGames, genres, (game: GameUS) => game.genres);
+		const newPublishers = findNew(americanGames, publishers, (game: GameUS) => game.publishers);
+		const newDevelopers = findNew(
+			americanGames,
+			developers,
+			(game: GameUS) => game.esrbDescriptors
+		);
+		const newEsrb = findNew(americanGames, esrbs, (game: GameUS) => game.esrbDescriptors);
+
+		genres = await addNew('genres', newGenres, genres);
+		publishers = await addNew('publishers', newPublishers, publishers);
+		developers = await addNew('developers', newDevelopers, developers);
+		esrbs = await addNew('esrb_descriptions', newEsrb, esrbs);
+
+		const games: IGameUpdates[] = toGameUpdates(
+			americanGames,
+			developers,
+			genres,
+			publishers,
+			esrbs
+		);
 		let count = 100;
+		let numberOfPriceUpdates = 0;
+
+		const start = dayjs().valueOf();
 
 		while (games.length) {
-			const temp = games.splice(0, 100);
-			const { error } = await supabase.from<IGame>('games').upsert(
-				temp.map((t) => t.game),
-				{ count: 'exact' }
-			);
-			const { error: gameDeveloperError } = await supabase.from('game_developers').upsert(
-				temp.flatMap((t) => t.developers),
-				{ count: 'exact' }
-			);
-			const { error: gamePublishersError } = await supabase.from('game_publishers').upsert(
-				temp.flatMap((t) => t.publishers),
-				{ count: 'exact' }
-			);
-			const { error: gameGenresError } = await supabase.from('game_genres').upsert(
-				temp.flatMap((t) => t.genres),
-				{ count: 'exact' }
-			);
-			const { error: gameEsrbError } = await supabase.from('game_esrb_descriptions').upsert(
-				temp.flatMap((t) => t.esrbs),
-				{ count: 'exact' }
-			);
+			const batch = games.splice(0, 75);
+			await supabase.from<IGame>('games').upsert(batch.map((t) => t.game));
+			await supabase.from('game_developers').upsert(batch.flatMap((t) => t.developers));
+			await supabase.from('game_publishers').upsert(batch.flatMap((t) => t.publishers));
+			await supabase.from('game_genres').upsert(batch.flatMap((t) => t.genres));
+			await supabase.from('game_esrb_descriptions').upsert(batch.flatMap((t) => t.esrbs));
+
+			const { data } = await supabase
+				.from<IPrice>('prices')
+				.select('game_id, price, date')
+				.in(
+					'game_id',
+					batch.map((gu: IGameUpdates) => gu.game.id)
+				);
+
+			const priceMap =
+				data
+					?.sort((a: IPrice, b: IPrice) => (a < b ? -1 : a === b ? 0 : 1))
+					.reduce((map: { [key: string]: IPrice }, p: IPrice) => {
+						map[p.game_id] = p;
+						return map;
+					}, {}) || {};
+
+			const priceUpdates: IPrice[] = batch.reduce((updates: IPrice[], gu: IGameUpdates) => {
+				const todayPrice = gu.game.sale_price || gu.game.msrp;
+				if (!!todayPrice && priceMap[gu.game.id]?.price !== `$${todayPrice}`) {
+					return [
+						...updates,
+						{
+							game_id: gu.game.id,
+							price: todayPrice,
+							date: dayjs().format('YYYY-MM-DD')
+						}
+					];
+				}
+				return updates;
+			}, []);
+
+			const { error } = await supabase.from<IPrice>('prices').upsert(priceUpdates);
+
+			numberOfPriceUpdates += priceUpdates.length;
 
 			if (error) {
-				console.error('error updating games', error);
-			}
-			if (gameDeveloperError) {
-				console.error('game developer upsert error', gameDeveloperError);
-			}
-			if (gamePublishersError) {
-				console.error('game publisher upsert error', gamePublishersError);
-			}
-			if (gameGenresError) {
-				console.error('game genre upsert error', gameGenresError);
-				console.log(temp.map((x) => x.game));
-				console.log(temp.map((x) => x.genres));
+				console.log('price update error', error);
 				return;
 			}
-			if (gameEsrbError) {
-				console.error('game esrb upsert error', gameEsrbError);
-			}
 
-			console.log(`${count - temp.length} - ${count} of ${games.length + count}`);
-			count += temp.length;
+			writeProgressToConsole(start, count, count + games.length);
+			count += batch.length;
 		}
+
+		console.log('prices updated', numberOfPriceUpdates);
+
+		console.log('completed');
 
 		return {
 			status: 200,
