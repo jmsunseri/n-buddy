@@ -4,7 +4,7 @@ import type { IDeveloper, IEsrb, IGame, IGenre, IPublisher, IPrice } from '$mode
 import type { EndpointOutput } from '@sveltejs/kit';
 import { GameUS, getGamesAmerica } from 'nintendo-switch-eshop';
 import dayjs from 'dayjs';
-import duration from 'dayjs/plugin/duration';
+import duration from 'dayjs/plugin/duration.js';
 
 interface IDescribed {
 	description: string;
