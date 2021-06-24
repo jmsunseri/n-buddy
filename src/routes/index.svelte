@@ -12,7 +12,7 @@
 
 	let search: string;
 	let skip = 0;
-	let take = 5;
+	let take = 10;
 	let games: IGame[] = [];
 	let hasMore = false;
 	let loading = false;
@@ -77,7 +77,7 @@
 
 	const onGetMore = async () => {
 		loading = true;
-		skip += 5;
+		skip += 10;
 		try {
 			const response = await fetch();
 			games = games.concat(response.data.games);
@@ -96,11 +96,14 @@
 		</div>
 	</div>
 	<div class="flex flex-col gap-3 h-full overflow-y-auto pt-3">
-		{#each games as game}
-			<GameCard {game}>
-				<WatchUnWatchButton {game} {userId} isWatching={watching.includes(game.id)} />
-			</GameCard>
-		{/each}
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+			{#each games as game}
+				<GameCard {game}>
+					<WatchUnWatchButton {game} {userId} isWatching={watching.includes(game.id)} />
+				</GameCard>
+			{/each}
+		</div>
+
 		{#if loading}
 			<div class="flex flex-row justify-center text-nintendo">
 				<Spinner size={50} />

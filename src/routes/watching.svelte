@@ -7,14 +7,13 @@
 	import GameCard from '$comp/GameCard.svelte';
 	import Spinner from '$comp/Spinner.svelte';
 	import type { IWatch } from '$models/IWatch';
-	import { onMount } from 'svelte';
 	import SnackBar from '$comp/SnackBar.svelte';
 	import { session } from '$store/session';
 	import type { Session } from '@supabase/gotrue-js';
 
 	let filter: string;
 	let skip = 0;
-	let take = 5;
+	let take = 10;
 	let watches: IWatch[] = [];
 	let hasMore = false;
 	let loading = false;
@@ -67,7 +66,7 @@
 
 	const onGetMore = async () => {
 		loading = true;
-		skip += 5;
+		skip += 10;
 		try {
 			const response = await fetch();
 			watches = watches.concat(response.data.watches);
@@ -87,11 +86,13 @@
 	</div>
 	<hr class="border-t-4 border-gray border-opacity-20" />
 	<div class="flex flex-col gap-3 h-full overflow-y-auto pt-3">
-		{#each watches as watch}
-			<GameCard game={watch.game}>
-				<WatchUnWatchButton game={watch.game} {userId} isWatching />
-			</GameCard>
-		{/each}
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+			{#each watches as watch}
+				<GameCard game={watch.game}>
+					<WatchUnWatchButton game={watch.game} {userId} isWatching />
+				</GameCard>
+			{/each}
+		</div>
 		{#if loading}
 			<div class="flex flex-row justify-center text-nintendo">
 				<Spinner size={50} />

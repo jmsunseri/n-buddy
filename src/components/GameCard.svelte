@@ -20,9 +20,6 @@
 	<div class="flex flex-col gap-3 flex-1">
 		<div class="flex flex-col md:flex-row justify-between gap-3">
 			<div class="text-xl font-bold">{game.title}</div>
-			<div class="md:absolute md:top-1 md:right-1">
-				<slot />
-			</div>
 		</div>
 		<div>
 			{`Release Date: ${release_date}`}
@@ -31,5 +28,8 @@
 			{`Current Price: ${game.sale_price || game.msrp || ''}, Range ${game.price_range || ''}`}
 		</div>
 		<!-- <Link url={game.url}>eShop Link</Link> -->
+	</div>
+	<div class="md:absolute md:bottom-1 md:right-1">
+		<slot />
 	</div>
 </div>
