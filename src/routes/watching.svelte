@@ -57,6 +57,8 @@
 		}
 	};
 
+	$: userId && onNewSearch();
+
 	const onSearchKeyUp = (event: KeyboardEvent) => {
 		if (event.code === 'Enter') {
 			onNewSearch();
@@ -74,8 +76,6 @@
 			loading = false;
 		}
 	};
-
-	onMount(() => onNewSearch());
 </script>
 
 <div class="flex flex-col gap-5 h-full">
