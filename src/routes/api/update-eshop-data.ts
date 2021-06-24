@@ -236,7 +236,8 @@ export const get = async (): Promise<EndpointOutput> => {
 	} catch (e) {
 		console.log(e);
 		return {
-			status: 500
+			status: 500,
+			body: JSON.stringify(e)
 		};
 	}
 };
